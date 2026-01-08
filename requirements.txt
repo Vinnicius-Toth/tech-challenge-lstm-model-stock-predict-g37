@@ -1,0 +1,10 @@
+yfinance
+pandas
+numpy
+matplotlib
+scikit-learn
+tensorflow
+fastapi
+uvicorn
+joblib
+logger
