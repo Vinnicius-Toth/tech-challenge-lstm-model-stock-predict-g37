@@ -1,15 +1,13 @@
-import os
 from data_loader import load_data
 from preprocessing import preprocess_data
 from train import train_model
 from evaluate import evaluate_model
-import joblib
-from logger import Logs
-from enums import data_load_enums
+from save_model import load_and_save_model
+from enums import DataLoadEnums
 from train_config import TrainingConfig
+from logger import Logs
 
 log = Logs("handler", emoji="▶️ ")
-MODEL_DIR = "models"
 
 def run_pipeline(symbol,start_date,end_date,path_data):
     """
@@ -38,22 +36,18 @@ def run_pipeline(symbol,start_date,end_date,path_data):
 
             # Salvamento
             if metrics: 
-                os.makedirs(MODEL_DIR, exist_ok=True)
-                model.save(f"{MODEL_DIR}/lstm_model.h5")
-                joblib.dump(scaler, f"{MODEL_DIR}/scaler.pkl")
-
-                log.info("💾 Modelo e scaler salvos")
+                load_and_save_model(model, scaler)
                 log.info("✅ Pipeline finalizado com sucesso")
                 break
 
-            # Ajuste de hiperparâmetros (simples)
+            # Ajuste de hiperparâmetros para nova iteração
             config = config.replace_hyperparameters()
 
     except Exception as e:
         log.error(f"Erro no pipeline: {e}")
 
 if __name__ == "__main__":
-    run_pipeline(symbol=data_load_enums["symbol"],
-                 start_date=data_load_enums["start_date"],
-                 end_date=data_load_enums["end_date"],
-                 path_data=data_load_enums["path_data"])
+    run_pipeline(symbol=DataLoadEnums.SYMBOL.value,
+                 start_date=DataLoadEnums.START_DATE.value,
+                 end_date=DataLoadEnums.END_DATE.value,
+                 path_data=DataLoadEnums.PATH_DATA.value)
