@@ -12,76 +12,79 @@ Métricas utilizadas:
 
 import numpy as np
 import matplotlib.pyplot as plt
-import joblib
-
-from tensorflow.keras.models import load_model
 from sklearn.metrics import mean_absolute_error, mean_squared_error
+from logger import Logs
 
-from preprocessing import preprocess_data
+log = Logs("evaluate", emoji="📊 ")
 
-
-def evaluate_model(
-    data_path: str = "data/raw_data.csv",
-    model_path: str = "models/lstm_model.h5",
-    scaler_path: str = "models/scaler.pkl",
-    window_size: int = 60,
-    train_ratio: float = 0.8
-):
+def evaluate_model(model, X_test, y_test, scaler, plot=True):
     """
-    Avalia o modelo LSTM em dados nunca vistos (teste).
+    Avalia o modelo LSTM em dados de teste.
 
     Args:
-        data_path: caminho do CSV com dados históricos
-        model_path: caminho do modelo treinado
-        scaler_path: caminho do scaler salvo
-        window_size: tamanho da janela temporal
-        train_ratio: proporção usada para treino
+        model: modelo LSTM treinado
+        X_test: dados de entrada de teste
+        y_test: valores reais normalizados
+        scaler: scaler usado no treinamento
+        plot: se True, exibe gráfico real vs previsto
+
+    Returns:
+        dict com métricas de avaliação
     """
+    log.info("Avaliando modelo...")
 
-    # 1️⃣ Carregar e pré-processar os dados
-    X, y = preprocess_data(data_path, window_size)
+    # 1️⃣ Gerar previsões
+    predictions_scaled = model.predict(X_test)
 
-    split_index = int(len(X) * train_ratio)
-    X_test = X[split_index:]
-    y_test = y[split_index:]
-
-    # 2️⃣ Carregar modelo e scaler
-    model = load_model(model_path, compile=False)
-    scaler = joblib.load(scaler_path)
-
-    # 3️⃣ Gerar previsões
-    predictions = model.predict(X_test)
-
-    # 4️⃣ Desnormalizar valores
+    # 2️⃣ Desnormalizar valores
     y_test_real = scaler.inverse_transform(y_test.reshape(-1, 1))
-    predictions_real = scaler.inverse_transform(predictions)
+    predictions_real = scaler.inverse_transform(predictions_scaled)
 
-    # 5️⃣ Calcular métricas
+    # 3️⃣ Calcular métricas
     mae = mean_absolute_error(y_test_real, predictions_real)
-    rmse = np.sqrt(
-    mean_squared_error(y_test_real, predictions_real)
-    )
+    rmse = np.sqrt(mean_squared_error(y_test_real, predictions_real))
     mape = np.mean(
         np.abs((y_test_real - predictions_real) / y_test_real)
     ) * 100
 
-    # 6️⃣ Exibir métricas
+    metrics = {
+        "MAE": float(mae),
+        "RMSE": float(rmse),
+        "MAPE": float(mape)
+    }
+
+    # 4️⃣ Exibir métricas
     print("\n📊 Resultados da Avaliação")
     print("-" * 30)
     print(f"MAE  : {mae:.2f}")
     print(f"RMSE : {rmse:.2f}")
     print(f"MAPE : {mape:.2f}%")
 
-    # 7️⃣ Visualização
-    plt.figure()
-    plt.plot(y_test_real, label="Real")
-    plt.plot(predictions_real, label="Previsto")
-    plt.legend()
-    plt.title("Preço Real vs Previsto - LSTM")
-    plt.xlabel("Tempo")
-    plt.ylabel("Preço")
-    plt.show()
+    # 5️⃣ Visualização
+    if plot:
+        plt.figure(figsize=(10, 5))
+        plt.plot(y_test_real, label="Real")
+        plt.plot(predictions_real, label="Previsto")
+        plt.legend()
+        plt.title("Preço Real vs Previsto - LSTM")
+        plt.xlabel("Tempo")
+        plt.ylabel("Preço")
+        plt.tight_layout()
+        plt.show()
 
+    # 6️⃣ Decisão do usuário
+    while True:
+        print("\nO modelo atende às expectativas?")
+        print("1 - Sim, salvar como produção")
+        print("2 - Não, ajustar hiperparâmetros")
 
-if __name__ == "__main__":
-    evaluate_model()
+        choice = input("Escolha: ")
+
+        if choice == "1":
+            return metrics
+        elif choice == "2":
+            print("Ajuste os hiperparâmetros e execute novamente")   
+            return None
+        else:
+            print("Escolha inválida. Encerrando avaliação.")
+            continue

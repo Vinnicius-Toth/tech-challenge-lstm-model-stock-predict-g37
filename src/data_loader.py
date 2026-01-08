@@ -7,7 +7,7 @@ def load_data(symbol, start_date, end_date, output_path):
     """
     Carrega dados de ações do Yahoo Finance e salva em um arquivo CSV.
     """
-    log.info(f"📥 Coletando dados - Symbol: {symbol} - {start_date} to {end_date}")
+    log.info(f"Coletando dados - Symbol: {symbol} - {start_date} to {end_date}")
     
     try:
         df = yf.download(symbol, start=start_date, end=end_date)

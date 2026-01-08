@@ -5,28 +5,28 @@ from logger import Logs
 
 log = Logs("train_model", emoji="🧠 ")
 
-def train_model(X, y):
+def train_model(X, y, config):
     """
     Treina o modelo LSTM
     """
-    log.info("🧠 Iniciando o treinamento do modelo LSTM")
+    log.info("Iniciando o treinamento do modelo LSTM")
 
     try:
-        train_size = int(len(X) * 0.8)
+        train_size = int(len(X) * config.train_ratio)
         X_train, X_test = X[:train_size], X[train_size:]
         y_train, y_test = y[:train_size], y[train_size:]
 
         model = Sequential([
-            LSTM(50, return_sequences=True, input_shape=(60, 1)),
-            Dropout(0.2),
-            LSTM(50),
-            Dropout(0.2),
+            LSTM(config.lstm_units, return_sequences=True, input_shape=(config.window_size, 1)),
+            Dropout(config.dropout_rate),
+            LSTM(config.lstm_units),
+            Dropout(config.dropout_rate),
             Dense(1)
         ])
 
         model.compile(optimizer="adam", loss="mse")
 
-        model.fit(X_train, y_train, epochs=20, batch_size=32)
+        model.fit(X_train, y_train, epochs=config.epochs, batch_size=config.batch_size)
 
         log.info("✅ Treinamento concluído com sucesso")
         return model
