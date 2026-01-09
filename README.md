@@ -137,7 +137,7 @@ http://localhost:8000
 
 Documentação Swagger: http://localhost:8000/docs
 
-🧰 Tecnologias Utilizadas
+## 🧰 Tecnologias Utilizadas
 
 - Python 3.10+
 - Pandas / NumPy
